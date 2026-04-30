@@ -1,0 +1,24 @@
+{
+  "objects": {
+    "litify_pm__Intake__c": [
+      { "fullName": "CallSofia_Call_ID__c", "type": "Text", "length": 36, "externalId": true, "unique": true, "label": "CallSofia Call ID" },
+      { "fullName": "CallSofia_Event_ID__c", "type": "Text", "length": 36, "label": "CallSofia Last Event ID" },
+      { "fullName": "CallSofia_Quality_Score__c", "type": "Number", "precision": 3, "scale": 0, "label": "AI Quality Score" },
+      { "fullName": "CallSofia_Language__c", "type": "Picklist", "valueSet": ["en","es","hi"], "label": "Language" },
+      { "fullName": "CallSofia_Case_Type__c", "type": "Text", "length": 80, "label": "Case Type" },
+      { "fullName": "CallSofia_Twilio_SID__c", "type": "Text", "length": 50, "label": "Twilio Call SID" },
+      { "fullName": "CallSofia_Recording_URL__c", "type": "Url", "label": "Recording URL" },
+      { "fullName": "CallSofia_Summary__c", "type": "LongTextArea", "length": 32768, "label": "AI Summary" },
+      { "fullName": "CallSofia_Incident_Date__c", "type": "Date", "label": "Incident Date" },
+      { "fullName": "CallSofia_Injury_Type__c", "type": "Text", "length": 255, "label": "Injury Type" },
+      { "fullName": "CallSofia_Employer_Name__c", "type": "Text", "length": 255, "label": "Employer" },
+      { "fullName": "CallSofia_Medical_Treatment__c", "type": "Text", "length": 100, "label": "Medical Treatment" },
+      { "fullName": "CallSofia_Prior_Attorney__c", "type": "Checkbox", "defaultValue": false, "label": "Prior Attorney" },
+      { "fullName": "CallSofia_Last_Synced_At__c", "type": "DateTime", "label": "Last Synced At" }
+    ],
+    "Task": [
+      { "fullName": "CallSofia_Call_ID__c", "type": "Text", "length": 36, "externalId": true, "label": "CallSofia Call ID" },
+      { "fullName": "CallSofia_Twilio_SID__c", "type": "Text", "length": 50, "label": "Twilio Call SID" }
+    ]
+  }
+}
