@@ -30,14 +30,24 @@ export const SEVERITY_TO_LEVEL: Record<ActivityLogEntry["severity"], number> = {
   error: 400,
 };
 
-/** Translate to platform-api `CreateLogEntry` shape (POST /v1/logs). */
+/**
+ * Translate to platform-api `CreateLogEntry` shape (POST /v1/logs).
+ *
+ * `source` defaults to `"webhook"` because platform-api enforces
+ * `chk_activity_logs_source` — a CHECK constraint with an explicit allowlist
+ * of source strings (`webhook`, `webhook_delivery`, `voice_agent`, etc.).
+ * Anything outside the list is silently dropped by the batch writer.
+ * Bridge attribution lives in `metadata.source_app="callsofia-bridge"` so we
+ * can still distinguish bridge-emitted rows downstream.
+ */
 export function toCreateLogEntry(entry: ActivityLogEntry): Record<string, unknown> {
+  const metadata = { source_app: "callsofia-bridge", ...entry.event_data };
   const out: Record<string, unknown> = {
     level: SEVERITY_TO_LEVEL[entry.severity],
     category: entry.category ?? "webhook",
     event_type: entry.type,
-    source: entry.source ?? "callsofia-bridge",
-    metadata: entry.event_data,
+    source: entry.source ?? "webhook",
+    metadata,
   };
   if (entry.trace_id) out.trace_id = entry.trace_id;
   if (entry.call_id) out.call_id = entry.call_id;
