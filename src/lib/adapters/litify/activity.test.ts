@@ -1,19 +1,20 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 
-const queryMock = vi.fn();
+const findOneMock = vi.fn();
 const createMock = vi.fn();
 const updateMock = vi.fn();
 
+const mockConn = {
+  sobject: () => ({ findOne: findOneMock, create: createMock, update: updateMock }),
+};
 vi.mock("./auth", () => ({
   litifyAuth: {
-    getConnection: async () => ({
-      query: queryMock,
-      sobject: () => ({ create: createMock, update: updateMock }),
-    }),
+    getConnection: async () => mockConn,
+    withFreshConnection: async (fn: (c: typeof mockConn) => Promise<unknown>) => fn(mockConn),
   },
 }));
 
-beforeEach(() => { queryMock.mockReset(); createMock.mockReset(); updateMock.mockReset(); vi.resetModules(); });
+beforeEach(() => { findOneMock.mockReset(); createMock.mockReset(); updateMock.mockReset(); vi.resetModules(); });
 
 describe("startInboundCall", () => {
   it("creates Task with correct fields", async () => {
@@ -32,11 +33,15 @@ describe("startInboundCall", () => {
 });
 
 describe("completeCall", () => {
-  it("updates existing Task to Completed", async () => {
-    queryMock.mockResolvedValue({ records: [{ Id: "t1" }], totalSize: 1 });
+  it("updates existing Task to Completed (parameterized lookup)", async () => {
+    findOneMock.mockResolvedValue({ Id: "t1" });
     updateMock.mockResolvedValue({ id: "t1", success: true });
     const { completeCall } = await import("./activity");
     await completeCall({ callId: "c1", duration: 1020, intakeId: "i1" });
+    expect(findOneMock).toHaveBeenCalledWith(
+      { CallSofia_Call_ID__c: "c1" },
+      ["Id"],
+    );
     expect(updateMock).toHaveBeenCalledWith(expect.objectContaining({
       Id: "t1",
       Status: "Completed",
@@ -45,7 +50,7 @@ describe("completeCall", () => {
   });
 
   it("no-ops gracefully when Task not found", async () => {
-    queryMock.mockResolvedValue({ records: [], totalSize: 0 });
+    findOneMock.mockResolvedValue(null);
     const { completeCall } = await import("./activity");
     await completeCall({ callId: "missing", duration: 0, intakeId: "i1" });
     expect(updateMock).not.toHaveBeenCalled();

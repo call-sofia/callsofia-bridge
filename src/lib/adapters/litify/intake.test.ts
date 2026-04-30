@@ -1,12 +1,23 @@
 import { describe, it, expect, vi } from "vitest";
 
-const queryMock = vi.fn();
+const findOneMock = vi.fn();
 const createMock = vi.fn();
 const updateMock = vi.fn();
 const upsertMock = vi.fn();
 
+const mockConn = {
+  sobject: () => ({
+    findOne: findOneMock,
+    create: createMock,
+    update: updateMock,
+    upsert: upsertMock,
+  }),
+};
 vi.mock("./auth", () => ({
-  litifyAuth: { getConnection: async () => ({ query: queryMock, sobject: () => ({ create: createMock, update: updateMock, upsert: upsertMock }) }) },
+  litifyAuth: {
+    getConnection: async () => mockConn,
+    withFreshConnection: async (fn: (c: typeof mockConn) => Promise<unknown>) => fn(mockConn),
+  },
 }));
 vi.mock("./case-type-cache", () => ({ getLitifyCaseTypeId: async () => "ct1" }));
 vi.mock("@/lib/config", () => ({
@@ -33,9 +44,13 @@ describe("LitifyIntake.create", () => {
 });
 
 describe("LitifyIntake.findByCallId", () => {
-  it("looks up by external ID", async () => {
-    queryMock.mockResolvedValue({ records: [{ Id: "i1" }], totalSize: 1 });
+  it("looks up by external ID via parameterized findOne", async () => {
+    findOneMock.mockResolvedValue({ Id: "i1" });
     const { findByCallId } = await import("./intake");
     expect((await findByCallId("c1"))?.Id).toBe("i1");
+    expect(findOneMock).toHaveBeenCalledWith(
+      { CallSofia_Call_ID__c: "c1" },
+      expect.arrayContaining(["Id", "CallSofia_Call_ID__c"]),
+    );
   });
 });

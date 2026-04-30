@@ -133,7 +133,8 @@ export class LitifyAdapter implements CrmAdapter {
             downloadUrl: (p.download_url as string) ?? "",
             callId,
           });
-          return { outcome: "success", crm_record_id: r.contentVersionId };
+          // In `url` mode there is no ContentVersion — return the Intake Id instead.
+          return { outcome: "success", crm_record_id: r.contentVersionId ?? r.intakeId };
         }
 
         case "call.transferred":

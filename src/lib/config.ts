@@ -15,15 +15,22 @@ const ConfigSchema = z.object({
     loginUrl: z.string().url(),
     clientId: z.string(),
     clientSecret: z.string(),
-    username: z.string(),
-    password: z.string(),
-    securityToken: z.string(),
+    // Deprecated — kept optional for back-compat. OAuth Client Credentials Flow
+    // uses clientId/clientSecret only. A runtime warning fires if any of these
+    // are still set. TODO (post-rollout): remove these fields entirely.
+    username: z.string().optional(),
+    password: z.string().optional(),
+    securityToken: z.string().optional(),
   }).optional(),
   litify: z.object({
     autoConvertQualified: z.boolean().default(false),
     intakeDefaultOwnerId: z.string().optional(),
     intakeCoordinatorUserId: z.string().optional(),
     intakeRecordTypeId: z.string().optional(),
+    // `url` (default): store presigned URL on Intake (cheap, but URL expires).
+    // `attach`: download OGG and upload as ContentVersion (self-contained,
+    // but base64-loads the file → OOM risk on Vercel Functions for >~25 MB).
+    recordingMode: z.enum(["url", "attach"]).default("url"),
   }).default({}),
   genericWebhook: z.object({
     url: z.string().url().optional(),
@@ -87,6 +94,7 @@ export function loadConfig(): Config {
       intakeDefaultOwnerId: process.env.INTAKE_DEFAULT_OWNER_ID,
       intakeCoordinatorUserId: process.env.INTAKE_COORDINATOR_USER_ID,
       intakeRecordTypeId: process.env.LITIFY_INTAKE_RECORD_TYPE_ID,
+      recordingMode: process.env.LITIFY_RECORDING_MODE,
     },
     genericWebhook: {
       url: process.env.GENERIC_WEBHOOK_URL,
