@@ -9,7 +9,6 @@ const ConfigSchema = z.object({
   }),
   storage: z.object({
     databaseUrl: z.string().url(),
-    redisUrl: z.string().url(),
   }),
   crmAdapter: z.enum(["litify", "generic-webhook", "none"]),
   salesforce: z.object({
@@ -73,7 +72,6 @@ export function loadConfig(): Config {
     },
     storage: {
       databaseUrl: process.env.DATABASE_URL,
-      redisUrl: process.env.REDIS_URL,
     },
     crmAdapter: process.env.CRM_ADAPTER,
     salesforce: process.env.SALESFORCE_CLIENT_ID ? {

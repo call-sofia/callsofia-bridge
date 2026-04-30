@@ -3,7 +3,6 @@ import { config } from "@/lib/config";
 import { verifySignature, isTimestampFresh } from "@/lib/webhook/verify";
 import { parseEnvelope } from "@/lib/webhook/envelope";
 import { db, schema } from "@/lib/db/client";
-import { idempotency } from "@/lib/redis/client";
 import { publishEventForProcessing } from "@/lib/queue/publisher";
 import { platformApi } from "@/lib/platform-api/client";
 import { logger } from "@/lib/logger";
@@ -33,10 +32,11 @@ export async function POST(req: Request): Promise<Response> {
     return NextResponse.json({ error: "Invalid envelope" }, { status: 400 });
   }
 
-  const isFirstSeen = await idempotency.claim(envelope.event_id, 86400);
-  if (!isFirstSeen) return NextResponse.json({ ok: true, duplicate: true }, { status: 200 });
-
-  await db.insert(schema.events).values({
+  // Idempotency via the events table PK. ON CONFLICT DO NOTHING + RETURNING
+  // gives us a one-trip atomic claim: if the row already existed, RETURNING
+  // yields no rows and we treat the request as a duplicate. Avoids needing a
+  // separate KV store.
+  const inserted = await db.insert(schema.events).values({
     eventId: envelope.event_id,
     eventType: envelope.event_type,
     emittedAt: new Date(envelope.emitted_at),
@@ -46,7 +46,11 @@ export async function POST(req: Request): Promise<Response> {
     rawEnvelope: envelope as unknown as Record<string, unknown>,
     signatureValid: true,
     status: "received",
-  }).onConflictDoNothing();
+  }).onConflictDoNothing().returning({ eventId: schema.events.eventId });
+
+  if (inserted.length === 0) {
+    return NextResponse.json({ ok: true, duplicate: true }, { status: 200 });
+  }
 
   void platformApi.logActivity({
     type: "bridge.event_received",

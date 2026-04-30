@@ -2,7 +2,6 @@ import { NextResponse } from "next/server";
 import { sql } from "drizzle-orm";
 import { config } from "@/lib/config";
 import { db } from "@/lib/db/client";
-import { ping as redisPing } from "@/lib/redis/client";
 import { getAdapter, selectAdapterName } from "@/lib/adapters/registry";
 import { platformApi } from "@/lib/platform-api/client";
 import { logger } from "@/lib/logger";
@@ -24,13 +23,6 @@ export async function GET(_req: Request): Promise<Response> {
     checks.postgres = { healthy: true };
   } catch (err) {
     checks.postgres = { healthy: false, message: (err as Error).message };
-  }
-
-  try {
-    const r = await redisPing();
-    checks.redis = { healthy: r === "PONG" };
-  } catch (err) {
-    checks.redis = { healthy: false, message: (err as Error).message };
   }
 
   try {

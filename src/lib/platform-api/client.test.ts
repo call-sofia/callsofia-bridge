@@ -10,7 +10,6 @@ beforeEach(() => {
   process.env.CALLSOFIA_ORG_ID = "10000000-0000-0000-0000-000000000001";
   process.env.CALLSOFIA_WEBHOOK_SECRET = "whsec_xxx";
   process.env.DATABASE_URL = "postgres://localhost/test";
-  process.env.REDIS_URL = "https://test.upstash.io";
   process.env.CRM_ADAPTER = "litify";
   process.env.SALESFORCE_LOGIN_URL = "https://login.salesforce.com";
   process.env.SALESFORCE_CLIENT_ID = "x";

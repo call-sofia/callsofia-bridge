@@ -42,3 +42,4 @@ Thumbs.db
 
 # Drizzle generated
 src/lib/db/migrations/meta/_journal.json
+.vercel
