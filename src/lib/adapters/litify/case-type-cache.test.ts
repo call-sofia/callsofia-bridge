@@ -5,17 +5,12 @@ vi.mock("./auth", () => ({
   litifyAuth: { getConnection: async () => ({ query: queryMock }) },
 }));
 
-const redisStore = new Map<string, string>();
-vi.mock("@/lib/redis/client", () => ({
-  get: vi.fn(async (k: string) => redisStore.get(k) ?? null),
-  setIfNotExists: vi.fn(async (k: string, v: string) => {
-    if (redisStore.has(k)) return false;
-    redisStore.set(k, v);
-    return true;
-  }),
-}));
-
-beforeEach(() => { queryMock.mockReset(); redisStore.clear(); vi.resetModules(); });
+beforeEach(async () => {
+  queryMock.mockReset();
+  vi.resetModules();
+  const mod = await import("./case-type-cache");
+  mod._resetCaseTypeCache();
+});
 
 describe("getLitifyCaseTypeId", () => {
   it("queries SOQL and returns ID for case type name", async () => {
@@ -34,7 +29,8 @@ describe("getLitifyCaseTypeId", () => {
 
   it("uses cached value on second call", async () => {
     queryMock.mockResolvedValue({ records: [{ Id: "a0X123" }], totalSize: 1 });
-    const { getLitifyCaseTypeId } = await import("./case-type-cache");
+    const { getLitifyCaseTypeId, _resetCaseTypeCache } = await import("./case-type-cache");
+    _resetCaseTypeCache();
     await getLitifyCaseTypeId("Workers' Compensation");
     await getLitifyCaseTypeId("Workers' Compensation");
     expect(queryMock).toHaveBeenCalledTimes(1);

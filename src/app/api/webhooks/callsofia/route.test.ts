@@ -1,13 +1,21 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import crypto from "crypto";
 
+// Default mock returns one row from RETURNING (i.e. inserted = first-seen).
+// Tests that need to simulate a duplicate event override returningResult.
+let returningResult: Array<{ eventId: string }> = [{ eventId: "stub" }];
 vi.mock("@/lib/db/client", () => ({
-  db: { insert: () => ({ values: () => ({ onConflictDoNothing: async () => undefined }) }) },
-  schema: { events: {} },
+  db: {
+    insert: () => ({
+      values: () => ({
+        onConflictDoNothing: () => ({ returning: async () => returningResult }),
+      }),
+    }),
+  },
+  schema: { events: { eventId: "event_id" } },
 }));
 vi.mock("@/lib/queue/publisher", () => ({ publishEventForProcessing: vi.fn(async () => undefined) }));
 vi.mock("@/lib/platform-api/client", () => ({ platformApi: { logActivity: vi.fn(async () => undefined) } }));
-vi.mock("@/lib/redis/client", () => ({ idempotency: { claim: vi.fn(async () => true) } }));
 
 const SECRET = "whsec_" + crypto.randomBytes(8).toString("hex");
 process.env.CALLSOFIA_WEBHOOK_SECRET = SECRET;
@@ -15,7 +23,6 @@ process.env.CALLSOFIA_API_BASE_URL = "https://api.callsofia.co";
 process.env.CALLSOFIA_ORG_ID = "10000000-0000-0000-0000-000000000001";
 process.env.CALLSOFIA_API_KEY = "k_test_xxx";
 process.env.DATABASE_URL = "postgres://localhost/x";
-process.env.REDIS_URL = "https://test.upstash.io";
 process.env.CRM_ADAPTER = "litify";
 process.env.SALESFORCE_LOGIN_URL = "https://login.salesforce.com";
 process.env.SALESFORCE_CLIENT_ID = "x";
@@ -41,7 +48,10 @@ const validBody = (overrides: Record<string, unknown> = {}) => JSON.stringify({
   ...overrides,
 });
 
-beforeEach(() => { vi.clearAllMocks(); });
+beforeEach(() => {
+  vi.clearAllMocks();
+  returningResult = [{ eventId: "stub" }];
+});
 
 describe("POST /api/webhooks/callsofia", () => {
   it("returns 200 for valid signed request", async () => {
@@ -54,6 +64,24 @@ describe("POST /api/webhooks/callsofia", () => {
     });
     const res = await POST(req);
     expect(res.status).toBe(200);
+    const json = await res.json();
+    expect(json).toMatchObject({ ok: true });
+    expect(json.duplicate).toBeUndefined();
+  });
+
+  it("returns 200 with duplicate=true when event already exists (PK conflict)", async () => {
+    returningResult = [];
+    const { POST } = await import("./route");
+    const body = validBody();
+    const ts = new Date().toISOString();
+    const req = new Request("http://x/api/webhooks/callsofia", {
+      method: "POST", body,
+      headers: { "content-type": "application/json", "x-callsofia-timestamp": ts, "x-callsofia-signature": sign(body, ts) },
+    });
+    const res = await POST(req);
+    expect(res.status).toBe(200);
+    const json = await res.json();
+    expect(json).toEqual({ ok: true, duplicate: true });
   });
 
   it("returns 401 for invalid signature", async () => {
