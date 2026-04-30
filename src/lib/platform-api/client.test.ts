@@ -23,13 +23,22 @@ beforeEach(() => {
 });
 
 describe("PlatformApiClient.logActivity", () => {
-  it("POSTs with X-API-Key when MIRROR_TO_PLATFORM_API not false", async () => {
-    fetchMock.mockResolvedValue(new Response(null, { status: 200 }));
+  it("POSTs to /v1/logs with X-API-Key and translated body when MIRROR_TO_PLATFORM_API not false", async () => {
+    fetchMock.mockResolvedValue(new Response(null, { status: 202 }));
     const { platformApi } = await import("./client");
     await platformApi.logActivity({ type: "bridge.event_received", severity: "info", event_data: { foo: "bar" } });
     expect(fetchMock).toHaveBeenCalledOnce();
-    const [, init] = fetchMock.mock.calls[0];
+    const [url, init] = fetchMock.mock.calls[0];
+    expect(url).toBe("https://api.callsofia.co/v1/logs");
     expect(init.headers["X-API-Key"]).toBe("sk_test_xxx");
+    const body = JSON.parse(init.body as string);
+    expect(body).toMatchObject({
+      level: 200,
+      category: "webhook",
+      event_type: "bridge.event_received",
+      source: "callsofia-bridge",
+      metadata: { foo: "bar" },
+    });
   });
 
   it("getCallDetail GETs the correct path", async () => {

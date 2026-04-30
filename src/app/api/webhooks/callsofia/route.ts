@@ -51,7 +51,15 @@ export async function POST(req: Request): Promise<Response> {
   void platformApi.logActivity({
     type: "bridge.event_received",
     severity: "info",
-    event_data: { event_id: envelope.event_id, event_type: envelope.event_type, scope: envelope.data.scope },
+    event_data: {
+      event_id: envelope.event_id,
+      event_type: envelope.event_type,
+      scope: envelope.data.scope,
+      payload: envelope.data.payload,
+      schema_version: envelope.schema_version,
+      emitted_at: envelope.emitted_at,
+    },
+    pipeline_id: (envelope.data.scope as { pipeline_id?: string } | undefined)?.pipeline_id,
   }).catch((err: unknown) => logger.warn("mirror_failed", { err: (err as Error).message }));
 
   await publishEventForProcessing(envelope.event_id);
