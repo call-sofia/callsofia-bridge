@@ -5,16 +5,18 @@ const createMock = vi.fn();
 const updateMock = vi.fn();
 const upsertMock = vi.fn();
 
+const mockConn = {
+  sobject: () => ({
+    findOne: findOneMock,
+    create: createMock,
+    update: updateMock,
+    upsert: upsertMock,
+  }),
+};
 vi.mock("./auth", () => ({
   litifyAuth: {
-    getConnection: async () => ({
-      sobject: () => ({
-        findOne: findOneMock,
-        create: createMock,
-        update: updateMock,
-        upsert: upsertMock,
-      }),
-    }),
+    getConnection: async () => mockConn,
+    withFreshConnection: async (fn: (c: typeof mockConn) => Promise<unknown>) => fn(mockConn),
   },
 }));
 vi.mock("./case-type-cache", () => ({ getLitifyCaseTypeId: async () => "ct1" }));

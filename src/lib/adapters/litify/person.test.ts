@@ -3,11 +3,11 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 const findOneMock = vi.fn();
 const createMock = vi.fn();
 
+const mockConn = { sobject: () => ({ findOne: findOneMock, create: createMock }) };
 vi.mock("./auth", () => ({
   litifyAuth: {
-    getConnection: async () => ({
-      sobject: () => ({ findOne: findOneMock, create: createMock }),
-    }),
+    getConnection: async () => mockConn,
+    withFreshConnection: async (fn: (c: typeof mockConn) => Promise<unknown>) => fn(mockConn),
   },
 }));
 

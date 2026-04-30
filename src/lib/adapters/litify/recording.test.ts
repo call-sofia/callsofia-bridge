@@ -5,11 +5,11 @@ global.fetch = fetchMock as unknown as typeof fetch;
 
 const createMock = vi.fn();
 const updateMock = vi.fn();
+const mockConn = { sobject: () => ({ create: createMock, update: updateMock }) };
 vi.mock("./auth", () => ({
   litifyAuth: {
-    getConnection: async () => ({
-      sobject: () => ({ create: createMock, update: updateMock }),
-    }),
+    getConnection: async () => mockConn,
+    withFreshConnection: async (fn: (c: typeof mockConn) => Promise<unknown>) => fn(mockConn),
   },
 }));
 

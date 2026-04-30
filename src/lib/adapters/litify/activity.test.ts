@@ -4,11 +4,13 @@ const findOneMock = vi.fn();
 const createMock = vi.fn();
 const updateMock = vi.fn();
 
+const mockConn = {
+  sobject: () => ({ findOne: findOneMock, create: createMock, update: updateMock }),
+};
 vi.mock("./auth", () => ({
   litifyAuth: {
-    getConnection: async () => ({
-      sobject: () => ({ findOne: findOneMock, create: createMock, update: updateMock }),
-    }),
+    getConnection: async () => mockConn,
+    withFreshConnection: async (fn: (c: typeof mockConn) => Promise<unknown>) => fn(mockConn),
   },
 }));
 
