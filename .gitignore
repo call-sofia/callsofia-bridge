@@ -40,6 +40,7 @@ coverage/
 .DS_Store
 Thumbs.db
 
-# Drizzle generated
-src/lib/db/migrations/meta/_journal.json
-.vercel
+# Drizzle: journal MUST be tracked. drizzle-kit migrate (run by
+# vercel.json buildCommand) reads meta/_journal.json to know which SQL
+# files to apply; excluding it breaks Git-triggered Vercel deploys with
+# "Can't find meta/_journal.json file".
