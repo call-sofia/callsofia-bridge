@@ -35,8 +35,8 @@ describe("PlatformApiClient.logActivity", () => {
       level: 200,
       category: "webhook",
       event_type: "bridge.event_received",
-      source: "callsofia-bridge",
-      metadata: { foo: "bar" },
+      source: "webhook",
+      metadata: { source_app: "callsofia-bridge", foo: "bar" },
     });
   });
 
