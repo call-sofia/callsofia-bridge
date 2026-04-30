@@ -1,6 +1,6 @@
 import { config } from "../config";
 import { logger } from "../logger";
-import type { ActivityLogEntry } from "./activity-logs";
+import { toCreateLogEntry, type ActivityLogEntry } from "./activity-logs";
 
 class PlatformApiClient {
   private baseUrl: string;
@@ -20,10 +20,10 @@ class PlatformApiClient {
     const cfg = config();
     if (!cfg.observability.mirrorToPlatformApi) return;
     try {
-      const res = await fetch(`${this.baseUrl}/v1/activity-logs`, {
+      const res = await fetch(`${this.baseUrl}/v1/logs`, {
         method: "POST",
         headers: this.headers(),
-        body: JSON.stringify({ ...entry, source: entry.source ?? "callsofia-bridge" }),
+        body: JSON.stringify(toCreateLogEntry(entry)),
       });
       if (!res.ok) logger.warn("activity_log_post_failed", { status: res.status });
     } catch (err) {
