@@ -35,14 +35,28 @@ describe("verifySignature", () => {
 });
 
 describe("isTimestampFresh", () => {
-  it("rejects timestamps > 5 min old", () => {
+  it("rejects timestamps > 5 min old (ISO)", () => {
     const old = new Date(Date.now() - 10 * 60 * 1000).toISOString();
     expect(isTimestampFresh(old, 300)).toBe(false);
   });
-  it("accepts recent timestamps", () => {
+  it("accepts recent timestamps (ISO)", () => {
     expect(isTimestampFresh(new Date().toISOString(), 300)).toBe(true);
   });
   it("rejects unparseable timestamps", () => {
     expect(isTimestampFresh("not-a-date", 300)).toBe(false);
+  });
+  it("accepts recent unix-seconds timestamps (platform-api format)", () => {
+    const nowSec = String(Math.floor(Date.now() / 1000));
+    expect(isTimestampFresh(nowSec, 300)).toBe(true);
+  });
+  it("rejects stale unix-seconds timestamps", () => {
+    const oldSec = String(Math.floor((Date.now() - 10 * 60 * 1000) / 1000));
+    expect(isTimestampFresh(oldSec, 300)).toBe(false);
+  });
+  it("accepts recent unix-millis timestamps", () => {
+    expect(isTimestampFresh(String(Date.now()), 300)).toBe(true);
+  });
+  it("rejects empty string", () => {
+    expect(isTimestampFresh("", 300)).toBe(false);
   });
 });
