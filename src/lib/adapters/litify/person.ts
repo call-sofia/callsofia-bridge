@@ -14,14 +14,15 @@ export interface PersonInput {
   phone?: string;
 }
 
-const escapeStr = (s: string) => s.replace(/'/g, "\\'");
-
+// Use jsforce's `sobject().findOne(conditions, fields)` for parameterized queries.
+// jsforce serializes the conditions object into SOQL with proper escaping —
+// no manual quote-escaping (which only handled `'` and missed `\`, newlines).
 export async function findByPhone(phone: string): Promise<LitifyPerson | null> {
   const conn = await litifyAuth.getConnection();
-  const result = await conn.query<LitifyPerson>(
-    `SELECT Id, Name, Phone FROM litify_pm__Person__c WHERE Phone = '${escapeStr(phone)}' LIMIT 1`,
-  );
-  return result.records[0] ?? null;
+  const record = await conn
+    .sobject("litify_pm__Person__c")
+    .findOne<LitifyPerson>({ Phone: phone }, ["Id", "Name", "Phone"]);
+  return (record as LitifyPerson | null) ?? null;
 }
 
 export async function upsertByPhone(phone: string, input: PersonInput): Promise<LitifyPerson> {

@@ -23,14 +23,17 @@ export interface LitifyIntake {
   litify_pm__Status__c?: string;
 }
 
-const escapeStr = (s: string) => s.replace(/'/g, "\\'");
-
+// Use jsforce's `sobject().findOne(conditions, fields)` for parameterized queries.
+// jsforce serializes the condition object into SOQL with proper escaping.
 export async function findByCallId(callId: string): Promise<LitifyIntake | null> {
   const conn = await litifyAuth.getConnection();
-  const r = await conn.query<LitifyIntake>(
-    `SELECT Id, Name, CallSofia_Call_ID__c, litify_pm__Status__c FROM litify_pm__Intake__c WHERE CallSofia_Call_ID__c = '${escapeStr(callId)}' LIMIT 1`
-  );
-  return r.records[0] ?? null;
+  const record = await conn
+    .sobject("litify_pm__Intake__c")
+    .findOne<LitifyIntake>(
+      { CallSofia_Call_ID__c: callId },
+      ["Id", "Name", "CallSofia_Call_ID__c", "litify_pm__Status__c"],
+    );
+  return (record as LitifyIntake | null) ?? null;
 }
 
 export async function createIntake(input: IntakeCreateInput): Promise<{ id: string }> {

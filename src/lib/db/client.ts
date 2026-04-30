@@ -10,7 +10,12 @@ let _db: PostgresJsDatabase<typeof schema> | null = null;
 
 function getDb(): PostgresJsDatabase<typeof schema> {
   if (_db) return _db;
-  const sql = postgres(config().storage.databaseUrl, { max: 10, idle_timeout: 20 });
+  // Each Function instance opens its own pool, and Vercel cold starts can
+  // produce many concurrent instances. With Neon's serverless pooler (or any
+  // PgBouncer-style proxy) we want a small per-instance pool — 3 connections
+  // is the recommended cap to keep total connection count reasonable across
+  // cold starts. Was `max: 10`, which exhausted Neon's connection budget.
+  const sql = postgres(config().storage.databaseUrl, { max: 3, idle_timeout: 20 });
   _db = drizzle(sql, { schema });
   return _db;
 }
