@@ -51,7 +51,7 @@ Validation lives in [`src/lib/webhook/envelope.ts`](../src/lib/webhook/envelope.
 
 ## Two accepted shapes
 
-The original DESIGN spec called for `data: {scope, payload}`. The actual platform-api dispatcher (`apps/platform-api/src/services/webhook_delivery.py:913`) sends a flat shape — `data` is just the trimmed call fields. The bridge accepts both and normalises to the nested form before persisting.
+The original DESIGN spec called for `data: {scope, payload}`. Platform-api actually emits a flat shape — `data` is just the trimmed call fields. The bridge accepts both and normalises to the nested form before persisting.
 
 **Nested (DESIGN spec):**
 

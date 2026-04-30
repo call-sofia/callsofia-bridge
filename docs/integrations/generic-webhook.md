@@ -56,7 +56,7 @@ When `GENERIC_WEBHOOK_SECRET` is set, two more headers carry the signature (see 
 
 ## Transforms
 
-CallSofia's webhook envelope (per [`docs/payload-spec.md`](../payload-spec.md), and as currently emitted by `apps/platform-api/src/services/webhook_delivery.py`) is a **flat data block**:
+CallSofia's webhook envelope (per [`docs/payload-spec.md`](../payload-spec.md)) is a **flat data block**:
 
 ```json
 {
